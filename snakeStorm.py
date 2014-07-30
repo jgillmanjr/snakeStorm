@@ -9,6 +9,15 @@ Jason Gillman Jr. <jason@rrfaae.com>
 import requests
 import json
 
+def listApiMethods(apiVersion = 'v1'):
+	methodList = {}
+	apiDocs = requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json()
+	for (groupName,group) in apiDocs.iteritems():
+		methodList[groupName] = []
+		for (methodName, methodSpecs) in group['__methods'].iteritems():
+			methodList[groupName].append(methodName)
+	return methodList
+
 class snakeStorm:
 
 	def __init__(self, username, password, method, parameters = {}, version = 'v1'):	
