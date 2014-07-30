@@ -34,7 +34,7 @@ class snakeStorm:
 
 	def addParams(self, paramDict):
 		""" Add multiple parameters. If a parameter is already set, it will be overwritten. """
-		if type(paramDict) is dict:
+		if isinstance(paramDict, dict):
 			for (key,value) in paramDict.iteritems():
 				self.parameters[key] = value
 
@@ -55,11 +55,11 @@ class snakeStorm:
 	def request(self):
 		""" Send the request to the Storm API """
 		## Do we have params or not? ##
-		if type(self.parameters) is dict:
+		if isinstance(self.parameters, dict):
 			self.postData['params'] = self.parameters
 			self.lastCall = requests.post(self.fullURI, data = json.dumps(self.postData), auth = (self.username, self.password)).json()
 		else:
 			self.postData['params'] = None
-			self.lastCall = requests.post(self.fullURI, auth = (self.username, self.password)).json()
+			self.lastCall = requests.request('GET', self.fullURI, auth = (self.username, self.password)).json()
 
 		return self.lastCall # For immediate usage
