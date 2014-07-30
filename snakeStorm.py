@@ -11,11 +11,14 @@ import json
 
 class snakeStorm:
 
-	def __init__(self, username, password, method, parameters = None, version = 'v1'):	
+	def __init__(self, username, password, method, parameters = {}, version = 'v1'):	
 		self.username		= username
 		self.password		= password
 		self.method			= method
-		self.parameters		= parameters
+		if isinstance(parameters, dict):
+			self.parameters		= parameters
+		else:
+			self.parameters		= {}
 		self.version		= version
 
 		self.baseURI		= 'https://api.stormondemand.com'
@@ -40,7 +43,7 @@ class snakeStorm:
 
 	def clearParams(self):
 		""" Remove all set parameters """
-		self.parameters = None
+		self.parameters = {}
 
 	def listParams(self):
 		""" A holdover from me being used to having variable visibility """
@@ -55,7 +58,7 @@ class snakeStorm:
 	def request(self):
 		""" Send the request to the Storm API """
 		## Do we have params or not? ##
-		if isinstance(self.parameters, dict):
+		if len(self.parameters) > 0:
 			self.postData['params'] = self.parameters
 			self.lastCall = requests.post(self.fullURI, data = json.dumps(self.postData), auth = (self.username, self.password)).json()
 		else:
