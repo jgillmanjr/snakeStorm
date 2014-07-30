@@ -23,6 +23,10 @@ class snakeStorm:
 		self.apiFormat		= 'json'
 		self.fullURI		= '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, self.method, self.apiFormat)
 
+		## Request specific variables ##
+		self.lastCall		= None # Store the result of the last Storm API Call here
+		self.postData		= {'params': None} # What will get sent if actually passing params
+
 	## Local Parameter Methods ##
 	def addParam(self, key, value):
 		""" Add a single parameter. If already set, it will be overwritten"""
@@ -46,3 +50,14 @@ class snakeStorm:
 		""" Remove a specific parameter by key """
 		if self.parameters.has_key(key):
 			del self.parameters[key]
+
+	## API Interaction Methods ##
+	def request(self):
+		""" Send the request to the Storm API """
+		## Do we have params or not? ##
+		if type(self.parameters) is dict:
+			self.postData['params'] = self.parameters
+			self.lastCall = requests.post(self.fullURI, data = json.dumps(self.postData), auth = (self.username, self.password)).json()
+		else:
+			self.postData['params'] = None
+			self.lastCall = requests.post(self.fullURI, auth = (self.username, self.password)).json()
