@@ -61,3 +61,5 @@ class snakeStorm:
 		else:
 			self.postData['params'] = None
 			self.lastCall = requests.post(self.fullURI, auth = (self.username, self.password)).json()
+
+		return self.lastCall # For immediate usage
