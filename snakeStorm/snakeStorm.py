@@ -24,10 +24,7 @@ class snakeStorm:
 		self.username		= username
 		self.password		= password
 		self.method			= method
-		if isinstance(parameters, dict):
-			self.parameters		= parameters
-		else:
-			self.parameters		= {}
+		self.parameters		= parameters
 		self.version		= version
 
 		self.baseURI		= 'https://api.stormondemand.com'
