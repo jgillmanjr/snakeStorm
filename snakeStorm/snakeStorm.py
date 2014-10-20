@@ -38,7 +38,7 @@ class snakeStorm:
 
 	## Local Parameter Methods ##
 	def addParams(self, **params):
-		""" Add multiple parameters. If a parameter is already set, it will be overwritten. """
+		""" Add parameters. If a parameter is already set, it will be overwritten. """
 		for (key,value) in params.iteritems():
 				self.parameters[key] = value
 
@@ -50,10 +50,11 @@ class snakeStorm:
 		""" A holdover from me being used to having variable visibility """
 		return self.parameters
 
-	def removeParam(self, key):
-		""" Remove a specific parameter by key """
-		if self.parameters.has_key(key):
-			del self.parameters[key]
+	def removeParams(self, *params):
+		""" Remove specific parameters by key """
+		for key in params:
+			if self.parameters.has_key(key):
+				del self.parameters[key]
 
 	## API Interaction Methods ##
 	def request(self):
