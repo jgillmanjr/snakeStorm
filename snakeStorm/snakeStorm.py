@@ -37,14 +37,9 @@ class snakeStorm:
 		self.postData		= {'params': None} # What will get sent if actually passing params
 
 	## Local Parameter Methods ##
-	def addParam(self, key, value):
-		""" Add a single parameter. If already set, it will be overwritten"""
-		self.parameters[key] = value
-
-	def addParams(self, paramDict):
+	def addParams(self, **params):
 		""" Add multiple parameters. If a parameter is already set, it will be overwritten. """
-		if isinstance(paramDict, dict):
-			for (key,value) in paramDict.iteritems():
+		for (key,value) in params.iteritems():
 				self.parameters[key] = value
 
 	def clearParams(self):
