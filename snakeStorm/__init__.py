@@ -19,7 +19,8 @@ def listApiMethods(apiVersion = 'v1'):
 
 class snakeStorm:
 
-	def __init__(self, username, password, method, parameters = {}, version = 'v1'):	
+	def __init__(self, username, password, method, parameters = {}, version = 'v1'):
+		""" Instantiate the snakeStorm class. At a mininimum you'll need to specify the username, password, and method. """
 		self.username		= username
 		self.password		= password
 		self.method			= method
@@ -43,11 +44,11 @@ class snakeStorm:
 				self.parameters[key] = value
 
 	def clearParams(self):
-		""" Remove all set parameters """
+		""" Remove all set parameters. """
 		self.parameters = {}
 
 	def listParams(self):
-		""" A holdover from me being used to having variable visibility """
+		""" A holdover from me being used to having variable visibility. """
 		return self.parameters
 
 	def removeParams(self, *params):
@@ -58,7 +59,7 @@ class snakeStorm:
 
 	## API Interaction Methods ##
 	def request(self):
-		""" Send the request to the Storm API """
+		""" Send the request to the Storm API. """
 		## Do we have params or not? ##
 		if len(self.parameters) > 0:
 			self.postData['params'] = self.parameters
