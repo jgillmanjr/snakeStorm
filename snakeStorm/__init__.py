@@ -9,16 +9,15 @@ import requests
 import json
 
 def listApiMethods(apiVersion = 'v1'):
-	""" Return a dict containing the method grouping as the key, and then a list containing the individual methods.
-	The grouping and individual methods consitute what need to be passed in as the API method."""
+	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
+	Example: storm/config/list"""
 
-	methodList = {}
+	methodList = []
 	apiDocs = requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json()
 	for (groupName,group) in apiDocs.iteritems():
-		methodList[groupName] = []
 		for (methodName, methodSpecs) in group['__methods'].iteritems():
-			methodList[groupName].append(methodName)
-	return methodList
+			methodList.append(groupName + '/' + methodName)
+	return sorted(methodList)
 
 class snakeStorm:
 
