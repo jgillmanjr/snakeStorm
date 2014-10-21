@@ -8,8 +8,8 @@ Jason Gillman Jr. <jason@rrfaae.com>
 import requests
 import json
 
-stormMethods = {}
-storm = None
+methods = {}
+connection = None
 
 
 def initialize(username, password, version = 'v1'):
@@ -17,10 +17,10 @@ def initialize(username, password, version = 'v1'):
 	methodList = listApiMethods(version)
 
 	for x in methodList:
-		stormMethods[x.lower()] = stormMethod(x)
+		methods[x.lower()] = stormMethod(x)
 
-	global storm
-	storm = stormConnection(username, password, version)
+	global connection
+	connection = stormConnection(username, password, version)
 
 def listApiMethods(apiVersion = 'v1'):
 	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
@@ -63,7 +63,7 @@ class stormMethod:
 
 	def request(self):
 		""" Call the specified API method """
-		self.result = storm.request(parameters = self.parameters, apiMethod = self.apiMethod)
+		self.result = connection.request(parameters = self.parameters, apiMethod = self.apiMethod)
 
 class stormConnection:
 
