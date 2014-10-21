@@ -8,6 +8,20 @@ Jason Gillman Jr. <jason@rrfaae.com>
 import requests
 import json
 
+stormMethods = {}
+storm = None
+
+
+def initialize(username, password, version = 'v1'):
+	""" 'Initializes' the module and generates the API method classes. """
+	methodList = listApiMethods(version)
+
+	for x in methodList:
+		stormMethods[x.lower()] = stormMethod(x)
+
+	global storm
+	storm = stormConnection(username, password, version)
+
 def listApiMethods(apiVersion = 'v1'):
 	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
 	Example: storm/config/list"""
@@ -19,27 +33,15 @@ def listApiMethods(apiVersion = 'v1'):
 			methodList.append(groupName + '/' + methodName)
 	return sorted(methodList)
 
-class snakeStorm:
+class stormMethod:
+	""" The class that defines API specific data, such as parameters. """
 
-	def __init__(self, username, password, method, parameters = {}, version = 'v1'):
-		""" Instantiate the snakeStorm class. At a mininimum you'll need to specify the username, password, and method. """
-		self.username		= username
-		self.password		= password
-		self.method			= method
-		self.parameters		= parameters
-		self.version		= version
-		self.verify			= True
+	def __init__(self, apiMethod):
+		#print 'Object for the ' + apiMethod + ' Storm API method created!'
+		self.parameters = {}
+		self.result = None
+		self.apiMethod = apiMethod
 
-		self.baseURI		= 'https://api.stormondemand.com'
-		self.apiPort		= 443
-		self.apiFormat		= 'json'
-		self.fullURI		= '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, self.method, self.apiFormat)
-
-		## Request specific variables ##
-		self.lastCall		= None # Store the result of the last Storm API Call here
-		self.postData		= {'params': None} # What will get sent if actually passing params
-
-	## Local Parameter Methods ##
 	def addParams(self, **params):
 		""" Add parameters. If a parameter is already set, it will be overwritten. """
 		for (key,value) in params.iteritems():
@@ -59,18 +61,43 @@ class snakeStorm:
 			if self.parameters.has_key(key):
 				del self.parameters[key]
 
-	## API Interaction Methods ##
 	def request(self):
-		""" Send the request to the Storm API. """
-		## Do we have params or not? ##
-		if len(self.parameters) > 0:
-			self.postData['params'] = self.parameters
-			self.lastCall = requests.post(self.fullURI, data = json.dumps(self.postData), auth = (self.username, self.password), verify = self.verify).json()
-		else:
-			self.postData['params'] = None
-			self.lastCall = requests.request('GET', self.fullURI, auth = (self.username, self.password), verify = self.verify).json()
+		""" Call the specified API method """
+		self.result = storm.request(parameters = self.parameters, apiMethod = self.apiMethod)
 
-		return self.lastCall # For immediate usage
+class stormConnection:
+
+	def __init__(self, username, password, version = 'v1'):
+		""" Instantiate the snakeStorm class. At a mininimum you'll need to specify the username, password, and method. """
+		self.username		= username
+		self.password		= password
+		self.version		= version
+		self.verify			= True
+
+		self.baseURI		= 'https://api.stormondemand.com'
+		self.apiPort		= 443
+		self.apiFormat		= 'json'
+
+		## Request specific variables ##
+		self.lastResult		= None # Store the result of the last Storm API Call here
+		self.lastMethod		= None # The last API method called
+		self.lastParams		= {} # The last set of parameters used
+		self.lastURI		= None # Full URI of the last call
+
+	## API Interaction Methods ##
+	def request(self, parameters, apiMethod):
+		""" Send the request to the Storm API. """
+		method = self.lastMethod = apiMethod
+		fullURI = self.lastURI = '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, method, self.apiFormat)
+		## Do we have params or not? ##
+		if len(parameters) > 0: # We have parameters - make a POST
+			postData = {}
+			postData['params'] = self.lastParams = parameters
+			self.lastResult = requests.post(fullURI, data = json.dumps(postData), auth = (self.username, self.password), verify = self.verify).json()
+		else: # No parameters - make a GET
+			self.lastResult = requests.request('GET', fullURI, auth = (self.username, self.password), verify = self.verify).json()
+
+		return self.lastResult
 
 	## Misc. Methods ##
 	def changeBase(self, baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
@@ -78,4 +105,3 @@ class snakeStorm:
 		self.baseURI	= baseURI
 		self.apiPort	= apiPort
 		self.verify 	= verify
-		self.fullURI	= '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, self.method, self.apiFormat) # Update the fullURI
