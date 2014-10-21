@@ -8,20 +8,6 @@ Jason Gillman Jr. <jason@rrfaae.com>
 import requests
 import json
 
-methods = {}
-connection = None
-
-
-def initialize(username, password, version = 'v1'):
-	""" 'Initializes' the module and generates the API method classes. """
-	methodList = listApiMethods(version)
-
-	for x in methodList:
-		methods[x.lower()] = stormMethod(x)
-
-	global connection
-	connection = stormConnection(username, password, version)
-
 def listApiMethods(apiVersion = 'v1'):
 	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
 	Example: storm/config/list"""
@@ -33,19 +19,24 @@ def listApiMethods(apiVersion = 'v1'):
 			methodList.append(groupName + '/' + methodName)
 	return sorted(methodList)
 
-class stormMethod:
+class method:
 	""" The class that defines API specific data, such as parameters. """
 
-	def __init__(self, apiMethod):
-		#print 'Object for the ' + apiMethod + ' Storm API method created!'
-		self.parameters = {}
-		self.result = None
-		self.apiMethod = apiMethod
+	def __init__(self, apiMethod, stormConnection, parameters = {}):
+		self.parameters			= parameters
+		self.stormConnection	= stormConnection
+		self.apiMethod			= apiMethod
+		self.result				= None
 
 	def addParams(self, **params):
 		""" Add parameters. If a parameter is already set, it will be overwritten. """
 		for (key,value) in params.iteritems():
 				self.parameters[key] = value
+
+	def changeConn(self, stormConnection):
+		""" Update the connection object without having to recreate the method object. """
+		if isinstance(stormConnection, connection): # Only change if it's a connection object
+			self.stormConnection = stormConnection
 
 	def clearParams(self):
 		""" Remove all set parameters. """
@@ -62,23 +53,24 @@ class stormMethod:
 				del self.parameters[key]
 
 	def request(self):
-		""" Call the specified API method """
-		self.result = connection.request(parameters = self.parameters, apiMethod = self.apiMethod)
+		""" Make the request and return the result """
+		self.result = self.stormConnection.request(parameters = self.parameters, apiMethod = self.apiMethod)
+		return self.result
 
-class stormConnection:
+class connection:
 
-	def __init__(self, username, password, version = 'v1'):
-		""" Instantiate the snakeStorm class. At a mininimum you'll need to specify the username, password, and method. """
+	def __init__(self, username, password, version = 'v1', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
+		""" Creates a stormConnection object for use by stormMethod objects. username and password required at a minimum"""
 		self.username		= username
 		self.password		= password
 		self.version		= version
-		self.verify			= True
+		self.verify			= verify
 
-		self.baseURI		= 'https://api.stormondemand.com'
-		self.apiPort		= 443
+		self.baseURI		= baseURI
+		self.apiPort		= apiPort
 		self.apiFormat		= 'json'
 
-		## Request specific variables ##
+		## Specific properties for the last request ##
 		self.lastResult		= None # Store the result of the last Storm API Call here
 		self.lastMethod		= None # The last API method called
 		self.lastParams		= {} # The last set of parameters used
@@ -100,8 +92,11 @@ class stormConnection:
 		return self.lastResult
 
 	## Misc. Methods ##
-	def changeBase(self, baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
+	def changeBase(self, username, password, version = 'v1', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
 		""" You probably won't need this method... """
 		self.baseURI	= baseURI
 		self.apiPort	= apiPort
 		self.verify 	= verify
+		self.version	= version
+		self.username	= username
+		self.password	= password
