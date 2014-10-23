@@ -1,5 +1,5 @@
 """
-snakeStorm Storm API Library
+Storm API Library
 
 An attempt at a psuedo-clean room implementation of a Storm API Library to learn python
 
@@ -10,7 +10,7 @@ import json
 
 def listApiMethods(apiVersion = 'v1'):
 	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
-	Example: storm/config/list"""
+	Example: storm/config/list """
 
 	methodList = []
 	apiDocs = requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json()
@@ -23,6 +23,8 @@ class method:
 	""" The class that defines API specific data, such as parameters. """
 
 	def __init__(self, apiMethod, stormConnection, parameters = {}):
+		""" Creates a method object. Will need to pass in the Storm API method you want to use (such as Storm/Config/list) as well as the connection object.
+		Parameters can be passed in now or later if required. """
 		self.parameters			= parameters
 		self.stormConnection	= stormConnection
 		self.apiMethod			= apiMethod
@@ -60,7 +62,7 @@ class method:
 class connection:
 
 	def __init__(self, username, password, version = 'v1', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
-		""" Creates a stormConnection object for use by stormMethod objects. username and password required at a minimum"""
+		""" Creates a connection object for use by method objects. username and password required at a minimum """
 		self.username		= username
 		self.password		= password
 		self.version		= version
