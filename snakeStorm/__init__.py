@@ -49,13 +49,13 @@ class method:
 		return self.parameters
 
 	def removeParams(self, *params):
-		""" Remove specific parameters by key """
+		""" Remove specific parameters by key. """
 		for key in params:
 			if self.parameters.has_key(key):
 				del self.parameters[key]
 
 	def request(self):
-		""" Make the request and return the result """
+		""" Make the request and return the result. """
 		self.result = self.stormConnection.request(parameters = self.parameters, apiMethod = self.apiMethod)
 		return self.result
 
