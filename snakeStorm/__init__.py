@@ -19,6 +19,15 @@ def listApiMethods(apiVersion = 'v1'):
 			methodList.append(groupName + '/' + methodName)
 	return sorted(methodList)
 
+def methodInputParams(apiMethod, apiVersion = 'v1'):
+	""" Return a dict of any input parameters that the specified API method will take. Empty dict if no input parameters exist for the method. """
+	apiDocs = dict((k.lower(), v) for k, v in requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json().iteritems())
+	methodGroup = '/'.join(apiMethod.lower().rsplit('/')[:-1]) # The "group" the method belongs to
+	methodEnd = apiMethod.lower().rsplit('/')[-1:][0] # The last part of the method
+
+	methodParams = apiDocs[methodGroup]['__methods'][methodEnd]['__input']
+	return methodParams
+
 class method:
 	""" The class that defines API specific data, such as parameters. """
 
@@ -43,6 +52,10 @@ class method:
 	def clearParams(self):
 		""" Remove all set parameters. """
 		self.parameters = {}
+
+	def inputParams(self):
+		""" Essentially a wrapper for methodInputParams() that automagically passes in the method in use and the version of the connection object. """
+		return methodInputParams(self.apiMethod, self.stormConnection.version)
 
 	def listParams(self):
 		""" A holdover from me being used to having variable visibility. """
