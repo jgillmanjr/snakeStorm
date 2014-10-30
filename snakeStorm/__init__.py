@@ -96,13 +96,16 @@ class connection:
 		""" Send the request to the Storm API. """
 		method = self.lastMethod = apiMethod
 		fullURI = self.lastURI = '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, method, self.apiFormat)
-		## Do we have params or not? ##
-		if len(parameters) > 0: # We have parameters - make a POST
-			postData = {}
-			postData['params'] = self.lastParams = parameters
-			self.lastResult = requests.post(fullURI, data = json.dumps(postData), auth = (self.username, self.password), verify = self.verify).json()
-		else: # No parameters - make a GET
-			self.lastResult = requests.request('GET', fullURI, auth = (self.username, self.password), verify = self.verify).json()
+		try:
+			## Do we have params or not? ##
+			if len(parameters) > 0: # We have parameters - make a POST
+				postData = {}
+				postData['params'] = self.lastParams = parameters
+				self.lastResult = requests.post(fullURI, data = json.dumps(postData), auth = (self.username, self.password), verify = self.verify).json()
+			else: # No parameters - make a GET
+				self.lastResult = requests.request('GET', fullURI, auth = (self.username, self.password), verify = self.verify).json()
+		except Exception as e:
+			self.lastResult = {'snakeStormError': 'There was an error with the request. Check your credentials?'}
 
 		return self.lastResult
 
