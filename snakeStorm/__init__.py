@@ -96,6 +96,7 @@ class connection:
 		""" Send the request to the Storm API. """
 		method = self.lastMethod = apiMethod
 		fullURI = self.lastURI = '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, method, self.apiFormat)
+		self.lastParams = {} ## Clean out
 		try:
 			## Do we have params or not? ##
 			if len(parameters) > 0: # We have parameters - make a POST
