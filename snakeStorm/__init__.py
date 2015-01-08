@@ -31,10 +31,13 @@ def methodInputParams(apiMethod, apiVersion = 'v1'):
 class method:
 	""" The class that defines API specific data, such as parameters. """
 
-	def __init__(self, apiMethod, stormConnection, parameters = {}):
+	def __init__(self, apiMethod, stormConnection, parameters = None):
 		""" Creates a method object. Will need to pass in the Storm API method you want to use (such as Storm/Config/list) as well as the connection object.
 		Parameters can be passed in now or later if required. """
-		self.parameters			= parameters
+		if parameters is None:
+			self.parameters		= {}
+		else:
+			self.parameters		= parameters
 		self.stormConnection	= stormConnection
 		self.apiMethod			= apiMethod
 		self.result				= None
