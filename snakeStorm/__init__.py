@@ -113,13 +113,3 @@ class connection:
 			self.lastResult = {'snakeStormError': 'There was an error with the request. Check your credentials?'}
 
 		return self.lastResult
-
-	## Misc. Methods ##
-	def changeBase(self, username, password, version = 'bleed', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
-		""" You probably won't need this method... """
-		self.baseURI	= baseURI
-		self.apiPort	= apiPort
-		self.verify 	= verify
-		self.version	= version
-		self.username	= username
-		self.password	= password
