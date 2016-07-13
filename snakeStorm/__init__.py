@@ -38,7 +38,7 @@ class method:
 		if parameters is None:
 			self.parameters		= {}
 		else:
-		self.parameters			= parameters
+			self.parameters			= parameters
 		self.stormConnection	= stormConnection
 		self.apiMethod			= apiMethod
 		self.result				= None
@@ -46,7 +46,7 @@ class method:
 	def addParams(self, **params):
 		""" Add parameters. If a parameter is already set, it will be overwritten. """
 		for (key,value) in params.items():
-				self.parameters[key] = value
+			self.parameters[key] = value
 
 	def changeConn(self, stormConnection):
 		""" Update the connection object without having to recreate the method object. """
@@ -95,7 +95,11 @@ class connection:
 		self.lastParams		= {} # The last set of parameters used
 		self.lastURI		= None # Full URI of the last call
 
-	## API Interaction Methods ##
+	def method(self, apiMethod, parameters = None):
+		if 'snakeStorm' not in locals():
+			import snakeStorm
+		return snakeStorm.method(apiMethod = apiMethod, stormConnection = self, parameters = parameters)
+
 	def request(self, parameters, apiMethod):
 		""" Send the request to the Storm API. """
 		method = self.lastMethod = apiMethod
