@@ -95,10 +95,15 @@ class connection:
 		self.lastParams		= {} # The last set of parameters used
 		self.lastURI		= None # Full URI of the last call
 
-	def method(self, apiMethod, parameters = None):
+	def returnMethod(self, apiMethod, parameters = None):
+		""" Returns a method object"""
 		if 'snakeStorm' not in locals():
 			import snakeStorm
 		return snakeStorm.method(apiMethod = apiMethod, stormConnection = self, parameters = parameters)
+
+	def call(self, apiMethod, parameters = None):
+		""" Instantly calls the requested method without needing to instantiate and manually call"""
+		return self.returnMethod(apiMethod = apiMethod, parameters = parameters).request()
 
 	def request(self, parameters, apiMethod):
 		""" Send the request to the Storm API. """
