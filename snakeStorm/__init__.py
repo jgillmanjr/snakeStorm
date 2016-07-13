@@ -5,23 +5,24 @@ An attempt at a psuedo-clean room implementation of a Storm API Library to learn
 
 Jason Gillman Jr. <jason@rrfaae.com>
 """
-import requests
 import json
 
-def listApiMethods(apiVersion = 'v1'):
+import requests
+
+def listApiMethods(apiVersion = 'bleed'):
 	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
 	Example: storm/config/list """
 
 	methodList = []
 	apiDocs = requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json()
-	for (groupName,group) in apiDocs.iteritems():
-		for (methodName, methodSpecs) in group['__methods'].iteritems():
+	for (groupName,group) in apiDocs.items():
+		for (methodName, methodSpecs) in group['__methods'].items():
 			methodList.append(groupName + '/' + methodName)
 	return sorted(methodList)
 
-def methodInputParams(apiMethod, apiVersion = 'v1'):
+def methodInputParams(apiMethod, apiVersion = 'bleed'):
 	""" Return a dict of any input parameters that the specified API method will take. Empty dict if no input parameters exist for the method. """
-	apiDocs = dict((k.lower(), v) for k, v in requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json().iteritems())
+	apiDocs = dict((k.lower(), v) for k, v in requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json().items())
 	methodGroup = '/'.join(apiMethod.lower().rsplit('/')[:-1]) # The "group" the method belongs to
 	methodEnd = apiMethod.lower().rsplit('/')[-1:][0] # The last part of the method
 
