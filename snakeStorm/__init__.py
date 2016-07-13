@@ -38,14 +38,14 @@ class method:
 		if parameters is None:
 			self.parameters		= {}
 		else:
-			self.parameters		= parameters
+		self.parameters			= parameters
 		self.stormConnection	= stormConnection
 		self.apiMethod			= apiMethod
 		self.result				= None
 
 	def addParams(self, **params):
 		""" Add parameters. If a parameter is already set, it will be overwritten. """
-		for (key,value) in params.iteritems():
+		for (key,value) in params.items():
 				self.parameters[key] = value
 
 	def changeConn(self, stormConnection):
@@ -78,7 +78,7 @@ class method:
 
 class connection:
 
-	def __init__(self, username, password, version = 'v1', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
+	def __init__(self, username, password, version = 'bleed', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
 		""" Creates a connection object for use by method objects. username and password required at a minimum """
 		self.username		= username
 		self.password		= password
@@ -115,7 +115,7 @@ class connection:
 		return self.lastResult
 
 	## Misc. Methods ##
-	def changeBase(self, username, password, version = 'v1', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
+	def changeBase(self, username, password, version = 'bleed', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
 		""" You probably won't need this method... """
 		self.baseURI	= baseURI
 		self.apiPort	= apiPort
