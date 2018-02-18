@@ -11,19 +11,30 @@ import requests
 __all__ = ['Client']
 
 APIVERSION = 'bleed'
-APIBASE = 'https://api.stormondemand.com'
+APIBASE = {
+    'public': 'https://api.stormondemand.com',
+    'internal': 'https://api.int.liquidweb.com',
+}
 APIPORT = 443
 
-DOCBASE = 'https://cart.liquidweb.com/storm/api/docs'
+DOCBASE = {
+    'public': 'https://cart.liquidweb.com/storm/api/docs',
+    'internal': 'https://billing.int.liquidweb.com/mysql/content/admin/api/internal/docs',
+}
 
 
-def get_api_methods(api_version=APIVERSION):
+def get_api_methods(api_version=APIVERSION, environment='public', need_creds=False, creds=None):
     """
     Return a dictionary of methods and associated parameters and outputs
     """
 
     method_dict = {}
-    api_docs = requests.get(DOCBASE + '/' + api_version + '/docs.json').json()
+    request_args = {
+        'url': DOCBASE[environment] + '/' + api_version + '/docs.json'
+    }
+    if need_creds:
+        request_args['auth'] = creds
+    api_docs = requests.get(**request_args).json()
     for group_name, group in api_docs.items():
         for method_name, method_specs in group['__methods'].items():
             full_method = group_name.lower() + '/' + method_name.lower()
@@ -33,10 +44,10 @@ def get_api_methods(api_version=APIVERSION):
                 'outputs': [],
             }
 
-            for param in method_specs['__input'].keys():
+            for param in (method_specs['__input'] or {}).keys():
                 method_dict[full_method]['parameters'].append(param)
 
-            for output in method_specs['__output'].keys():
+            for output in (method_specs['__output'] or {}).keys():
                 method_dict[full_method]['outputs'].append(output)
 
     return method_dict
@@ -49,12 +60,15 @@ class Client:
     def __getattr__(self, item):
         pass
 
-    def __init__(self, username, password, api_version=APIVERSION, api_base=APIBASE, api_port=APIPORT):
+    def __init__(self, username, password, api_version=APIVERSION, api_base=APIBASE['public'], api_port=APIPORT,
+                 environment='public', need_doc_creds=False):
         self.username = username
         self.password = password
+        self.environment = environment
         self.api_version = APIVERSION
         self.base_uri = api_base + ':' + str(api_port) + '/' + api_version
-        self.api_methods = get_api_methods(self.api_version)
+        self.api_methods = get_api_methods(self.api_version, self.environment, creds=(self.username, self.password),
+                                           need_creds=need_doc_creds)
         self.endpoint = MethodGroup()
 
         # Build out the endpoints
