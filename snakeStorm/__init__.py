@@ -6,119 +6,142 @@ An attempt at a psuedo-clean room implementation of a Storm API Library to learn
 Jason Gillman Jr. <jason@rrfaae.com>
 """
 import json
-
 import requests
 
-def listApiMethods(apiVersion = 'bleed'):
-	""" Return a sorted list of API methods as they would need to be specified in the method parameter.
-	Example: storm/config/list """
+__all__ = ['Client']
 
-	methodList = []
-	apiDocs = requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json()
-	for (groupName,group) in apiDocs.items():
-		for (methodName, methodSpecs) in group['__methods'].items():
-			methodList.append(groupName + '/' + methodName)
-	return sorted(methodList)
+APIVERSION = 'bleed'
+APIBASE = 'https://api.stormondemand.com'
+APIPORT = 443
 
-def methodInputParams(apiMethod, apiVersion = 'bleed'):
-	""" Return a dict of any input parameters that the specified API method will take. Empty dict if no input parameters exist for the method. """
-	apiDocs = dict((k.lower(), v) for k, v in requests.request('GET', 'https://www.stormondemand.com/api/docs/' + apiVersion + '/docs.json').json().items())
-	methodGroup = '/'.join(apiMethod.lower().rsplit('/')[:-1]) # The "group" the method belongs to
-	methodEnd = apiMethod.lower().rsplit('/')[-1:][0] # The last part of the method
+DOCBASE = 'https://cart.liquidweb.com/storm/api/docs'
 
-	methodParams = apiDocs[methodGroup]['__methods'][methodEnd]['__input']
-	return methodParams
 
-class method:
-	""" The class that defines API specific data, such as parameters. """
+def get_api_methods(api_version=APIVERSION):
+    """
+    Return a dictionary of methods and associated parameters and outputs
+    """
 
-	def __init__(self, apiMethod, stormConnection, parameters = None):
-		""" Creates a method object. Will need to pass in the Storm API method you want to use (such as Storm/Config/list) as well as the connection object.
-		Parameters can be passed in now or later if required. """
-		if parameters is None:
-			self.parameters		= {}
-		else:
-			self.parameters			= parameters
-		self.stormConnection	= stormConnection
-		self.apiMethod			= apiMethod
-		self.result				= None
+    method_dict = {}
+    api_docs = requests.get(DOCBASE + '/' + api_version + '/docs.json').json()
+    for group_name, group in api_docs.items():
+        for method_name, method_specs in group['__methods'].items():
+            full_method = group_name.lower() + '/' + method_name.lower()
+            method_dict[full_method] = {
+                'description': method_specs['__description'],
+                'parameters': [],
+                'outputs': [],
+            }
 
-	def addParams(self, **params):
-		""" Add parameters. If a parameter is already set, it will be overwritten. """
-		for (key,value) in params.items():
-			self.parameters[key] = value
+            for param in method_specs['__input'].keys():
+                method_dict[full_method]['parameters'].append(param)
 
-	def changeConn(self, stormConnection):
-		""" Update the connection object without having to recreate the method object. """
-		if isinstance(stormConnection, connection): # Only change if it's a connection object
-			self.stormConnection = stormConnection
+            for output in method_specs['__output'].keys():
+                method_dict[full_method]['outputs'].append(output)
 
-	def clearParams(self):
-		""" Remove all set parameters. """
-		self.parameters = {}
+    return method_dict
 
-	def inputParams(self):
-		""" Essentially a wrapper for methodInputParams() that automagically passes in the method in use and the version of the connection object. """
-		return methodInputParams(self.apiMethod, self.stormConnection.version)
 
-	def listParams(self):
-		""" A holdover from me being used to having variable visibility. """
-		return self.parameters
+class Client:
+    """
+    The main Client class
+    """
+    def __getattr__(self, item):
+        pass
 
-	def removeParams(self, *params):
-		""" Remove specific parameters by key. """
-		for key in params:
-			if self.parameters.has_key(key):
-				del self.parameters[key]
+    def __init__(self, username, password, api_version=APIVERSION, api_base=APIBASE, api_port=APIPORT):
+        self.username = username
+        self.password = password
+        self.api_version = APIVERSION
+        self.base_uri = api_base + ':' + str(api_port) + '/' + api_version
+        self.api_methods = get_api_methods(self.api_version)
+        self.endpoint = MethodGroup()
 
-	def request(self):
-		""" Make the request and return the result. """
-		self.result = self.stormConnection.request(parameters = self.parameters, apiMethod = self.apiMethod)
-		return self.result
+        # Build out the endpoints
+        for method, method_data in self.api_methods.items():
+            method_components = method.split('/')
+            current_location = self.endpoint
 
-class connection:
+            # Build the "groups"
+            while len(method_components) > 1:
+                component = method_components.pop(0)
+                if not hasattr(current_location, component):
+                    setattr(current_location, component, MethodGroup())
+                current_location = getattr(current_location, component)
 
-	def __init__(self, username, password, version = 'bleed', baseURI = 'https://api.stormondemand.com', apiPort = 443, verify = True):
-		""" Creates a connection object for use by method objects. username and password required at a minimum """
-		self.username		= username
-		self.password		= password
-		self.version		= version
-		self.verify			= verify
+            # Actual Method
+            component = method_components.pop(0)
+            setattr(current_location, component, Method(
+                username=self.username,
+                password=self.password,
+                base_uri=self.base_uri,
+                method_path=method,
+                method_definition=method_data
+            ))
 
-		self.baseURI		= baseURI
-		self.apiPort		= apiPort
-		self.apiFormat		= 'json'
 
-		## Specific properties for the last request ##
-		self.lastResult		= None # Store the result of the last Storm API Call here
-		self.lastMethod		= None # The last API method called
-		self.lastParams		= {} # The last set of parameters used
-		self.lastURI		= None # Full URI of the last call
+class Method:
+    """
+    Method Class
+    """
+    def __call__(self, **kwargs):
+        return self.request(**kwargs)
 
-	def returnMethod(self, apiMethod, parameters = None):
-		""" Returns a method object"""
-		if 'snakeStorm' not in locals():
-			import snakeStorm
-		return snakeStorm.method(apiMethod = apiMethod, stormConnection = self, parameters = parameters)
+    def __init__(self, username, password, base_uri, method_path, method_definition):
+        self._username = username
+        self._password = password
+        self._call_uri = base_uri + '/' + method_path
 
-	def call(self, apiMethod, parameters = None):
-		""" Instantly calls the requested method without needing to instantiate and manually call"""
-		return self.returnMethod(apiMethod = apiMethod, parameters = parameters).request()
+        self.description = method_definition['description']
+        self.parameters = {}
+        self.raw_result = None
+        self.result = None
+        self.result_text = None
+        self.request_error = False
 
-	def request(self, parameters, apiMethod):
-		""" Send the request to the Storm API. """
-		method = self.lastMethod = apiMethod
-		fullURI = self.lastURI = '%s:%s/%s/%s.%s' % (self.baseURI, str(self.apiPort), self.version, method, self.apiFormat)
-		self.lastParams = {} ## Clean out
-		try:
-			## Do we have params or not? ##
-			if len(parameters) > 0: # We have parameters - make a POST
-				postData = {}
-				postData['params'] = self.lastParams = parameters
-				self.lastResult = requests.post(fullURI, data = json.dumps(postData), auth = (self.username, self.password), verify = self.verify).json()
-			else: # No parameters - make a GET
-				self.lastResult = requests.request('GET', fullURI, auth = (self.username, self.password), verify = self.verify).json()
-		except Exception as e:
-			self.lastResult = {'snakeStormError': 'There was an error with the request. Check your credentials?'}
+    def set_params(self, **kwargs):
+        """
+        Set the method parameters
+        Don't clear if nothing entered
+        """
+        if len(kwargs) > 0:
+            self.parameters = kwargs
 
-		return self.lastResult
+    def clear_params(self):
+        """
+        Clear out set parameters
+        """
+        self.parameters = {}
+
+    def request(self, **kwargs):
+        """
+        Make the API request
+        Return whether the request was successful or not
+        """
+        request_args = {
+            'url': self._call_uri,
+            'auth': (self._username, self._password),
+        }
+        if len(self.parameters) > 0:
+            request_args['data'] = json.dumps({'params': self.parameters})
+
+        # kwargs will override
+        if len(kwargs) > 0:
+            request_args['data'] = json.dumps({'params': kwargs})
+
+        self.raw_result = requests.post(**request_args)
+        self.result_text = self.raw_result.text
+        try:
+            self.result = self.raw_result.json()
+        except Exception:
+            pass
+
+        self.request_error = (self.raw_result.status_code != requests.codes.ok)
+        return not self.request_error
+
+
+class MethodGroup:
+    """
+    This is just an empty definition to facilitate creating the "grouping" attributes
+    """
+    pass
