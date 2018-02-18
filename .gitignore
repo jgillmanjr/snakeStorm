@@ -2,3 +2,4 @@
 ignoreThisDir/
 MANIFEST
 dist/
+.idea/
