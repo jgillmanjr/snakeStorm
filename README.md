@@ -15,7 +15,7 @@ The following will get a grab the first 25 Storm servers on your account.
 import snakeStorm
 from pprint import pprint
 
-client = snakeStorm.client('username', 'password')
+client = snakeStorm.Client('username', 'password')
 
 client.endpoint.storm.server.list()
 
