@@ -145,12 +145,13 @@ class Method:
 
         self.raw_result = requests.post(**request_args)
         self.result_text = self.raw_result.text
+
         try:
             self.result = self.raw_result.json()
+            self.request_error = (self.raw_result.status_code != requests.codes.ok) or 'error' in self.result
         except Exception:
-            pass
+            self.request_error = True
 
-        self.request_error = (self.raw_result.status_code != requests.codes.ok)
         return not self.request_error
 
 
